@@ -14,5 +14,10 @@ frontend/build/
 
 # OS
 .DS_Store
+backend/model.h5
+backend/dataset/
+backend/venv/
+.venv/
+frontend/node_modules/
 
 
