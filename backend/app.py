@@ -1,14 +1,17 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-import tensorflow as tf
 import numpy as np
 from PIL import Image
 import io
 import os
 import tempfile
 import urllib.request
+from urllib.parse import urlparse
 from fpdf import FPDF
 from datetime import datetime
+
+os.environ.setdefault("KERAS_BACKEND", "tensorflow")
+import keras
 
 app = Flask(__name__)
 CORS(app)
@@ -17,16 +20,24 @@ CORS(app)
 # Load trained model
 # =============================
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_MODEL_PATH = os.path.join(SCRIPT_DIR, "model.h5")
+DEFAULT_MODEL_PATHS = [
+    os.path.join(SCRIPT_DIR, "model.keras"),
+    os.path.join(SCRIPT_DIR, "model.h5"),
+]
 MODEL_URL = os.environ.get("MODEL_URL")
 MODEL_PATH = os.environ.get("MODEL_PATH")
 
 if MODEL_PATH:
     MODEL_PATH = os.path.abspath(MODEL_PATH)
 elif MODEL_URL:
-    MODEL_PATH = os.path.join(tempfile.gettempdir(), "model.h5")
+    url_name = os.path.basename(urlparse(MODEL_URL).path)
+    model_name = url_name if url_name.endswith((".h5", ".keras")) else "model.h5"
+    MODEL_PATH = os.path.join(tempfile.gettempdir(), model_name)
 else:
-    MODEL_PATH = DEFAULT_MODEL_PATH
+    MODEL_PATH = next(
+        (path for path in DEFAULT_MODEL_PATHS if os.path.exists(path)),
+        DEFAULT_MODEL_PATHS[-1],
+    )
 
 
 def ensure_model_file():
@@ -35,8 +46,8 @@ def ensure_model_file():
 
     if not MODEL_URL:
         raise FileNotFoundError(
-            f"Model file not found at {MODEL_PATH}. Commit backend/model.h5 "
-            "or set MODEL_URL to a direct model download URL."
+            f"Model file not found at {MODEL_PATH}. Commit backend/model.keras "
+            "or backend/model.h5, or set MODEL_URL to a direct model download URL."
         )
 
     os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
@@ -54,7 +65,7 @@ def ensure_model_file():
     return MODEL_PATH
 
 
-model = tf.keras.models.load_model(ensure_model_file())
+model = keras.models.load_model(ensure_model_file(), compile=False)
 
 # =============================
 # Class names (alphabetical order of dataset folders — MUST match training)
