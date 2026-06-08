@@ -5,6 +5,8 @@ import numpy as np
 from PIL import Image
 import io
 import os
+import tempfile
+import urllib.request
 from fpdf import FPDF
 from datetime import datetime
 
@@ -15,8 +17,44 @@ CORS(app)
 # Load trained model
 # =============================
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(SCRIPT_DIR, "model.h5")
-model = tf.keras.models.load_model(MODEL_PATH)
+DEFAULT_MODEL_PATH = os.path.join(SCRIPT_DIR, "model.h5")
+MODEL_URL = os.environ.get("MODEL_URL")
+MODEL_PATH = os.environ.get("MODEL_PATH")
+
+if MODEL_PATH:
+    MODEL_PATH = os.path.abspath(MODEL_PATH)
+elif MODEL_URL:
+    MODEL_PATH = os.path.join(tempfile.gettempdir(), "model.h5")
+else:
+    MODEL_PATH = DEFAULT_MODEL_PATH
+
+
+def ensure_model_file():
+    if os.path.exists(MODEL_PATH):
+        return MODEL_PATH
+
+    if not MODEL_URL:
+        raise FileNotFoundError(
+            f"Model file not found at {MODEL_PATH}. Commit backend/model.h5 "
+            "or set MODEL_URL to a direct model download URL."
+        )
+
+    os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+    download_path = f"{MODEL_PATH}.download"
+    print(f"Downloading model from MODEL_URL to {MODEL_PATH}", flush=True)
+
+    try:
+        urllib.request.urlretrieve(MODEL_URL, download_path)
+        os.replace(download_path, MODEL_PATH)
+    except Exception:
+        if os.path.exists(download_path):
+            os.remove(download_path)
+        raise
+
+    return MODEL_PATH
+
+
+model = tf.keras.models.load_model(ensure_model_file())
 
 # =============================
 # Class names (alphabetical order of dataset folders — MUST match training)

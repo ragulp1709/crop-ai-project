@@ -5,7 +5,6 @@ __pycache__/
 
 # ML
 backend/dataset/
-backend/model.h5
 backend/*.pdf
 
 # React
@@ -14,7 +13,6 @@ frontend/build/
 
 # OS
 .DS_Store
-backend/model.h5
 backend/dataset/
 backend/venv/
 .venv/
