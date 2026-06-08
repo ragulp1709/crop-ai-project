@@ -1,5 +1,15 @@
 import React, { useState } from "react";
 
+const DEFAULT_API_BASE_URL =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? "http://127.0.0.1:5000"
+    : "https://crop-ai-project-x41e.onrender.com";
+
+const API_BASE_URL = (
+  process.env.REACT_APP_API_URL || DEFAULT_API_BASE_URL
+).replace(/\/$/, "");
+
 function App() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -24,7 +34,7 @@ function App() {
     const formData = new FormData();
     formData.append("image", selectedImage);
 
-    const res = await fetch("http://127.0.0.1:5000/api/crop-diagnosis", {
+    const res = await fetch(`${API_BASE_URL}/api/crop-diagnosis`, {
       method: "POST",
       body: formData,
     });
@@ -35,7 +45,7 @@ function App() {
   };
 
   const downloadPDF = async () => {
-    const res = await fetch("http://127.0.0.1:5000/api/generate-report", {
+    const res = await fetch(`${API_BASE_URL}/api/generate-report`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(result),
