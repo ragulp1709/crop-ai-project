@@ -14,29 +14,31 @@ CORS(app)
 # =============================
 # Load trained model
 # =============================
-MODEL_PATH = "model.h5"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(SCRIPT_DIR, "model.h5")
 model = tf.keras.models.load_model(MODEL_PATH)
 
 # =============================
-# Class names (MUST match training folders order)
+# Class names (alphabetical order of dataset folders — MUST match training)
 # =============================
-class_names = [
-    "Pepper__bell___Bacterial_spot",
-    "Pepper__bell___healthy",
-    "Potato___Early_blight",
-    "Potato___healthy",
-    "Potato___Late_blight",
-    "Tomato___Bacterial_spot",
-    "Tomato___Early_blight",
-    "Tomato___healthy",
-    "Tomato___Late_blight",
-    "Tomato___Leaf_Mold",
-    "Tomato___Septoria_leaf_spot",
-    "Tomato___Spider_mites",
-    "Tomato___Target_Spot",
-    "Tomato___Tomato_mosaic_virus",
-    "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
-]
+CLASS_META = {
+    "Pepper__bell___Bacterial_spot":               ("Pepper", "Bacterial_spot"),
+    "Pepper__bell___healthy":                       ("Pepper", "healthy"),
+    "Potato___Early_blight":                        ("Potato", "Early_blight"),
+    "Potato___Late_blight":                         ("Potato", "Late_blight"),
+    "Potato___healthy":                             ("Potato", "healthy"),
+    "Tomato_Bacterial_spot":                        ("Tomato", "Bacterial_spot"),
+    "Tomato_Early_blight":                          ("Tomato", "Early_blight"),
+    "Tomato_Late_blight":                           ("Tomato", "Late_blight"),
+    "Tomato_Leaf_Mold":                             ("Tomato", "Leaf_Mold"),
+    "Tomato_Septoria_leaf_spot":                    ("Tomato", "Septoria_leaf_spot"),
+    "Tomato_Spider_mites_Two_spotted_spider_mite":  ("Tomato", "Spider_mites"),
+    "Tomato__Target_Spot":                          ("Tomato", "Target_Spot"),
+    "Tomato__Tomato_YellowLeaf__Curl_Virus":        ("Tomato", "Tomato_Yellow_Leaf_Curl_Virus"),
+    "Tomato__Tomato_mosaic_virus":                  ("Tomato", "Tomato_mosaic_virus"),
+    "Tomato_healthy":                               ("Tomato", "healthy"),
+}
+class_names = list(CLASS_META.keys())
 
 # =============================
 # Advice dictionary
@@ -104,10 +106,8 @@ def predict():
 
     label = class_names[predicted_index]
 
-    # Parse label
-    parts = label.split("___")
-    crop = parts[0]
-    disease_raw = parts[1]
+    # Parse label using metadata map
+    crop, disease_raw = CLASS_META[label]
 
     if disease_raw.lower() == "healthy":
         status = "Healthy"
@@ -163,11 +163,11 @@ def generate_report():
 
     pdf.multi_cell(0, 10, f"Advice:\n{data['advice']}")
 
-    # Save PDF
-    filename = "crop_report.pdf"
+    # Save PDF to backend directory
+    filename = os.path.join(SCRIPT_DIR, "crop_report.pdf")
     pdf.output(filename)
 
-    return send_file(filename, as_attachment=True)
+    return send_file(filename, as_attachment=True, download_name="crop_report.pdf")
 
 # =============================
 # Run app

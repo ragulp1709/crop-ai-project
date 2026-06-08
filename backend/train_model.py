@@ -6,8 +6,9 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 import os
 
-# Path to dataset
-DATASET_PATH = "dataset"
+# Path to dataset (relative to this script's directory)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_PATH = os.path.join(SCRIPT_DIR, "dataset")
 
 # Image settings
 IMG_SIZE = (224, 224)
@@ -65,6 +66,6 @@ history = model.fit(
 )
 
 # Save model
-model.save("model.h5")
+model.save(os.path.join(SCRIPT_DIR, "model.h5"))
 
 print("✅ Model training complete. Saved as model.h5")
